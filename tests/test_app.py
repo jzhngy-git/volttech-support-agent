@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from contextlib import closing
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -109,10 +110,46 @@ class SupportFlowTests(unittest.TestCase):
         )
 
         body = response.json()
-        self.assertIn("doesn't confirm whether an exchange is offered", body["answer"])
-        self.assertIn("support needs to confirm", body["answer"])
+        self.assertIn("doesn't say whether exchanges are available", body["answer"])
+        self.assertIn("sent this to support to check", body["answer"])
         self.assertEqual(body["escalation"]["reason"], "high_value")
         self.assertFalse(body["eligible"])
+
+    def test_return_answer_is_conversational_and_explains_high_value_review(self):
+        body = self.client.post(
+            "/api/chat",
+            json={"message": "Can I still return my laptop?", "order_id": "VT-1042"},
+        ).json()
+
+        self.assertIn("Your VoltBook Pro 14-inch was delivered 20 days ago", body["answer"])
+        self.assertIn("inside the 30-day return window", body["answer"])
+        self.assertIn("support specialist needs to review it", body["answer"])
+        self.assertNotIn("Most VoltTech products may be returned", body["answer"])
+        self.assertTrue(body["sources"][0]["citation"])
+
+    def test_order_context_is_kept_when_returns_policy_is_not_top_result(self):
+        retrieved = [
+            {
+                "title": "Shipping & Delivery",
+                "text": "Standard delivery policy.",
+                "excerpt": "Standard delivery policy.",
+                "citation": "Shipping Section 1, p. 1",
+            },
+            {
+                "title": "30-Day Returns",
+                "text": "Return policy.",
+                "excerpt": "Return policy.",
+                "citation": "Returns Section 2, p. 2",
+            },
+        ]
+        with patch("app.retrieve_policies", return_value=retrieved):
+            body = self.client.post(
+                "/api/chat",
+                json={"message": "Where is my order?", "order_id": "VT-1042"},
+            ).json()
+
+        self.assertIn("I found order **#VT-1042**", body["answer"])
+        self.assertIn("its warranty is active", body["answer"])
 
     def test_contact_and_exchange_location_questions_are_not_guessed(self):
         questions = [
@@ -122,7 +159,7 @@ class SupportFlowTests(unittest.TestCase):
         for question in questions:
             with self.subTest(question=question):
                 body = self.client.post("/api/chat", json={"message": question}).json()
-                self.assertIn("doesn't include a store/drop-off address or a phone number", body["answer"])
+                self.assertIn("don't have a verified store address or phone number", body["answer"])
                 self.assertEqual(body["escalation"]["reason"], "uncertain")
 
     def test_frustration_and_possible_exclusion_are_escalated(self):

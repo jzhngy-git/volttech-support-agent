@@ -227,6 +227,86 @@ def has_contact_intent(message: str) -> bool:
     return any(re.search(pattern, text) for pattern in patterns)
 
 
+def policy_answer(policy: dict, order: dict | None) -> str:
+    title = policy["title"]
+    if title == "30-Day Returns":
+        if order:
+            window = (
+                "inside"
+                if order["return_eligible"]
+                else "outside"
+            )
+            return (
+                f"Your {order['item']} was delivered {order['days_since_delivery']} days ago, "
+                f"so it's {window} the 30-day return window. If it's been opened, it must be "
+                "defective or not as described. Include the accessories and proof of purchase. "
+                "Approved refunds go back to your original payment method within 5-7 business days."
+            )
+        return (
+            "You can return most products within 30 days of delivery. If you've opened the item, "
+            "it needs to be defective or not as described. Include all accessories and proof of "
+            "purchase. Approved refunds go back to your original payment method within "
+            "5-7 business days."
+        )
+    if title == "Return Shipping & Refunds":
+        return (
+            "Once support approves the return, follow the return instructions they send. "
+            "VoltTech covers return shipping for defective items or items that weren't as described; "
+            "for other eligible returns, you pay postage. After the item arrives and is inspected, "
+            "refunds take 5-7 business days."
+        )
+    if title == "Limited Warranty Coverage":
+        return (
+            "Computers and displays have a one-year warranty from delivery for defects in materials "
+            "or workmanship. A display fault like flickering during normal use is covered. After "
+            "inspection, support can confirm a repair or replacement."
+        )
+    if title == "Warranty Exclusions":
+        return (
+            "The warranty doesn't cover accidental or liquid damage, unauthorized repairs or "
+            "modifications, cosmetic wear that doesn't affect function, or damage from improper "
+            "installation. If the cause isn't clear, support will need to inspect the item first."
+        )
+    if title == "Warranty Claim Process":
+        return (
+            "To start a warranty claim, send support your order ID, serial number, and a description "
+            "of the issue. They may ask for photos. Please don't open or modify the device while the "
+            "claim is being reviewed; repair or replacement options are confirmed after inspection."
+        )
+    if title == "Shipping & Delivery":
+        return (
+            "Standard shipping usually takes 3-7 business days after dispatch, and tracking updates "
+            "when the carrier scans the parcel. If it's marked delivered but you can't find it, report "
+            "it within 7 days so support can open a carrier investigation."
+        )
+    if title == "Delivery Delays & Missing Parcels":
+        return (
+            "If tracking hasn't updated for 2 business days after dispatch, give the carrier one more "
+            "business day to scan it. If there's still no update, contact support with your order ID. "
+            "Report a parcel marked delivered but missing within 7 days."
+        )
+    if title == "Payment & Receipts":
+        return (
+            "We accept major credit and debit cards, plus PayPal. Your payment is captured when the "
+            "order is dispatched, and the receipt goes to the email on your order. If you can't find "
+            "it, check spam or contact support with your order ID for another copy."
+        )
+    if title == "Order Changes & Cancellations":
+        return (
+            "You can cancel an order or change its delivery address before fulfillment starts. "
+            "Once it's being packed or has gone to the carrier, support can't guarantee a change. "
+            "Contact support promptly with your order ID; after dispatch, check the carrier's options."
+        )
+    if title == "Safe Device Checks":
+        return (
+            "If the device won't turn on, check the outlet and use the original or an approved charger. "
+            "Unplug and reconnect the external cable, wait 30 seconds, then try the power button. "
+            "Don't open the device. If it's unusually hot, smells strange, has liquid damage, or a "
+            "swollen battery, stop using it and contact support."
+        )
+    return policy["text"]
+
+
 def retrieve_policies(message: str) -> list[dict]:
     return POLICY_RETRIEVER.search(message, limit=3)
 
@@ -309,33 +389,46 @@ def chat(request: ChatRequest) -> dict:
         phrase in message.lower()
         for phrase in ("accidental", "dropped", "liquid", "water", "unauthorized repair", "modified", "improper installation")
     )
+    return_policy_retrieved = any(source["title"] == "30-Day Returns" for source in sources)
 
     answer_parts = []
-    if sources:
-        answer_parts.append(sources[0]["excerpt"])
+    order_context_in_answer = False
+    if exchange_intent:
+        if order and return_policy_retrieved:
+            window = "within" if order["return_eligible"] else "outside"
+            answer_parts.append(
+                f"Your {order['item']} was delivered {order['days_since_delivery']} days ago, "
+                f"so it's {window} the 30-day return window."
+            )
+            order_context_in_answer = True
+        answer_parts.append(
+            "The return policy doesn't say whether exchanges are available, so I can't confirm a swap. "
+            "I've sent this to support to check the options."
+        )
+    elif contact_intent:
+        answer_parts.append(
+            "I don't have a verified store address or phone number to share. I've sent this to support "
+            "so they can give you the right contact details."
+        )
+    elif sources:
+        answer_parts.append(
+            policy_answer(
+                sources[0],
+                order if sources[0]["title"] == "30-Day Returns" else None,
+            )
+        )
+        order_context_in_answer = bool(order and sources[0]["title"] == "30-Day Returns")
     elif not exchange_intent and not contact_intent:
         answer_parts.append(
             "I couldn't find a policy clause that answers that confidently, so I won't guess. "
             "I can route this to a support specialist."
         )
-    if exchange_intent:
-        answer_parts.append(
-            "The published policy explains returns and refunds, but doesn't confirm whether an exchange is offered. "
-            "I can't promise an exchange; support needs to confirm the available options."
-        )
-    if contact_intent:
-        answer_parts.append(
-            "The verified information provided to me doesn't include a store/drop-off address or a phone number. "
-            "I won't guess those details, so I've sent this question to support."
-        )
-
     if order_id and order is None:
         answer_parts.append(f"I couldn't find order **#{order_id}**. Please check the order ID.")
-    elif order:
+    elif order and not order_context_in_answer:
         answer_parts.append(
-            f'Order **#{order["id"]}** is {order["item"]}, delivered {order["days_since_delivery"]} days ago. '
-            f'{"It is within" if order["return_eligible"] else "It is outside"} the 30-day return window; '
-            f'{"its" if order["warranty_active"] else "its"} warranty is '
+            f'I found order **#{order["id"]}** for {order["item"]}. It was delivered '
+            f'{order["days_since_delivery"]} days ago, and its warranty is '
             f'{"active" if order["warranty_active"] else "expired"}.'
         )
 
@@ -376,7 +469,6 @@ def chat(request: ChatRequest) -> dict:
             "uncertain",
         )
 
-    return_policy_retrieved = any(source["title"] == "30-Day Returns" for source in sources)
     eligible = bool(
         order
         and return_policy_retrieved
@@ -386,8 +478,12 @@ def chat(request: ChatRequest) -> dict:
         and not frustrated
         and order["price"] <= 200
     )
-    if order and return_policy_retrieved and order["return_eligible"] and defect_signal and order["price"] > 200:
-        answer_parts.append("This item meets the initial return-window and defect criteria, but its value requires human review before any refund or replacement.")
+    if order and escalation and escalation["reason"] == "high_value":
+        answer_parts.append(
+            f"Because this order is over $200, a support specialist needs to review it before "
+            f"{'confirming an exchange' if exchange_intent else 'any refund or replacement'}. "
+            "Nothing has been changed."
+        )
     elif eligible:
         answer_parts.append("This order appears eligible for a return resolution. Choose a refund or replacement below; nothing is changed until you approve it.")
 
