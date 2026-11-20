@@ -12,7 +12,8 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py ./
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='BAAI/bge-small-en-v1.5', cache_dir='/root/.cache/fastembed')"
+COPY app.py policy_search.py ./
 COPY policies ./policies
 COPY --from=frontend /build/dist ./dist
 

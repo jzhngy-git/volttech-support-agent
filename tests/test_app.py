@@ -41,7 +41,7 @@ class SupportFlowTests(unittest.TestCase):
             ("How long do I have to send my laptop back?", "30-Day Returns"),
             ("Can I cancel my order before it ships?", "Order Changes & Cancellations"),
             ("How do I get another copy of my payment receipt?", "Payment & Receipts"),
-            ("Tracking says delivered but my parcel is missing.", "Shipping & Delivery"),
+            ("Tracking says delivered but my parcel is missing.", "Delivery Delays & Missing Parcels"),
             ("How do I safely troubleshoot a device that will not power on?", "Safe Device Checks"),
         ]
         for question, expected_title in examples:

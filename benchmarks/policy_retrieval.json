@@ -1,0 +1,188 @@
+[
+  {
+    "question": "Can I send back my opened laptop if the display keeps blinking?",
+    "expected_title": "30-Day Returns"
+  },
+  {
+    "question": "How long after a delivery can I ask for my money back?",
+    "expected_title": "30-Day Returns"
+  },
+  {
+    "question": "What should I put in the box when I return something?",
+    "expected_title": "30-Day Returns"
+  },
+  {
+    "question": "Does VoltTech accept an item that has been unsealed?",
+    "expected_title": "30-Day Returns"
+  },
+  {
+    "question": "Who covers postage if the product arrived faulty?",
+    "expected_title": "Return Shipping & Refunds"
+  },
+  {
+    "question": "When does the refund reach my bank after the parcel is inspected?",
+    "expected_title": "Return Shipping & Refunds"
+  },
+  {
+    "question": "Do I need to pay to mail back an item that wasn't as described?",
+    "expected_title": "Return Shipping & Refunds"
+  },
+  {
+    "question": "What happens after customer support authorizes my return?",
+    "expected_title": "Return Shipping & Refunds"
+  },
+  {
+    "question": "Is a screen that flickers during normal use covered?",
+    "expected_title": "Limited Warranty Coverage"
+  },
+  {
+    "question": "How long is the manufacturer's cover for a computer?",
+    "expected_title": "Limited Warranty Coverage"
+  },
+  {
+    "question": "Can VoltTech repair or replace a display with a material fault?",
+    "expected_title": "Limited Warranty Coverage"
+  },
+  {
+    "question": "When does the one-year protection period begin?",
+    "expected_title": "Limited Warranty Coverage"
+  },
+  {
+    "question": "Will the warranty cover it if I accidentally drop my headphones?",
+    "expected_title": "Warranty Exclusions"
+  },
+  {
+    "question": "What if water gets inside the product?",
+    "expected_title": "Warranty Exclusions"
+  },
+  {
+    "question": "Is damage from an unapproved repair covered by the manufacturer?",
+    "expected_title": "Warranty Exclusions"
+  },
+  {
+    "question": "Does a scratch count if it doesn't stop the device from working?",
+    "expected_title": "Warranty Exclusions"
+  },
+  {
+    "question": "What information do I need to open a service claim?",
+    "expected_title": "Warranty Claim Process"
+  },
+  {
+    "question": "Should I send the serial number and a description of the fault?",
+    "expected_title": "Warranty Claim Process"
+  },
+  {
+    "question": "Can I take apart the device while support reviews my case?",
+    "expected_title": "Warranty Claim Process"
+  },
+  {
+    "question": "Will support ask me to provide photos for the repair request?",
+    "expected_title": "Warranty Claim Process"
+  },
+  {
+    "question": "How many working days does normal delivery usually take?",
+    "expected_title": "Shipping & Delivery"
+  },
+  {
+    "question": "The tracking page says it was dropped off, but I can't find the package.",
+    "expected_title": "Delivery Delays & Missing Parcels"
+  },
+  {
+    "question": "How long do I have to report a parcel that never arrived?",
+    "expected_title": [
+      "Delivery Delays & Missing Parcels",
+      "Shipping & Delivery"
+    ]
+  },
+  {
+    "question": "At what point does tracking begin to show movement?",
+    "expected_title": "Shipping & Delivery"
+  },
+  {
+    "question": "The courier hasn't scanned my shipment for two business days. What now?",
+    "expected_title": "Delivery Delays & Missing Parcels"
+  },
+  {
+    "question": "Tracking has been frozen since dispatch. When should I contact the shop?",
+    "expected_title": "Delivery Delays & Missing Parcels"
+  },
+  {
+    "question": "A package is marked delivered but is nowhere to be seen.",
+    "expected_title": [
+      "Delivery Delays & Missing Parcels",
+      "Shipping & Delivery"
+    ]
+  },
+  {
+    "question": "How do I start a carrier investigation for a missing delivery?",
+    "expected_title": "Delivery Delays & Missing Parcels"
+  },
+  {
+    "question": "Can I get another copy of the proof of payment?",
+    "expected_title": "Payment & Receipts"
+  },
+  {
+    "question": "Which payment methods are accepted at checkout?",
+    "expected_title": "Payment & Receipts"
+  },
+  {
+    "question": "I can't find the confirmation receipt in my inbox.",
+    "expected_title": "Payment & Receipts"
+  },
+  {
+    "question": "At what stage is my card charged for an order?",
+    "expected_title": "Payment & Receipts"
+  },
+  {
+    "question": "Can you update where my parcel is sent before fulfillment starts?",
+    "expected_title": "Order Changes & Cancellations"
+  },
+  {
+    "question": "Is it possible to stop an order before the warehouse packs it?",
+    "expected_title": "Order Changes & Cancellations"
+  },
+  {
+    "question": "The courier already has my item. Can support promise a cancellation?",
+    "expected_title": "Order Changes & Cancellations"
+  },
+  {
+    "question": "How can I change my delivery location while the order is being processed?",
+    "expected_title": "Order Changes & Cancellations"
+  },
+  {
+    "question": "My device won't start. What checks can I do without opening it?",
+    "expected_title": "Safe Device Checks"
+  },
+  {
+    "question": "What should I do if the battery looks swollen?",
+    "expected_title": "Safe Device Checks"
+  },
+  {
+    "question": "The screen is flashing. Should I reconnect the display lead?",
+    "expected_title": "Safe Device Checks"
+  },
+  {
+    "question": "Which charger should I use when the unit won't turn on?",
+    "expected_title": "Safe Device Checks"
+  },
+  {
+    "question": "Can VoltTech install a new operating system on my gaming console?",
+    "expected_title": null
+  },
+  {
+    "question": "Do you sell extended insurance for cameras?",
+    "expected_title": null
+  },
+  {
+    "question": "Can I exchange a bicycle purchased from another retailer?",
+    "expected_title": null
+  },
+  {
+    "question": "What is the current trade-in price for a used phone?",
+    "expected_title": null
+  },
+  {
+    "question": "Can your technicians recover deleted files from my laptop?",
+    "expected_title": null
+  }
+]

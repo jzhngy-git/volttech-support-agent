@@ -15,6 +15,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
+from policy_search import PolicyRetriever
+
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -22,31 +24,17 @@ DB_PATH = DATA_DIR / "volttech.sqlite3"
 DATA_DIR.mkdir(exist_ok=True)
 
 POLICY_TERMS = {
-    "30-Day Returns": {"return", "refund", "open", "day", "defect", "flicker", "screen", "exchange", "laptop", "send", "back", "accessory", "proof"},
+    "30-Day Returns": {"return", "refund", "open", "day", "defect", "flicker", "screen", "display", "exchange", "laptop", "send", "back", "accessory", "proof", "delivery", "window"},
     "Return Shipping & Refunds": {"return", "shipping", "refund", "label", "postage", "mail", "cost", "inspection", "days"},
-    "Limited Warranty Coverage": {"warranty", "laptop", "computer", "screen", "flicker", "display", "defect", "repair", "replacement", "coverage"},
-    "Warranty Exclusions": {"warranty", "damage", "liquid", "water", "repair", "exclusion", "inspection", "accidental", "dropped", "modified"},
-    "Warranty Claim Process": {"warranty", "claim", "serial", "inspection", "repair", "replacement", "photos", "service"},
-    "Shipping & Delivery": {"shipping", "delivery", "tracking", "delivered", "parcel", "carrier", "package", "arrival", "arrive", "late", "missing", "lost"},
-    "Delivery Delays & Missing Parcels": {"shipping", "delivery", "tracking", "delivered", "parcel", "carrier", "package", "late", "missing", "lost", "update"},
-    "Payment & Receipts": {"payment", "pay", "charge", "receipt", "invoice", "card", "paypal", "charged", "billing", "email"},
-    "Order Changes & Cancellations": {"order", "cancel", "change", "address", "dispatch", "fulfillment", "packed", "ship"},
+    "Limited Warranty Coverage": {"warranty", "laptop", "computer", "screen", "flicker", "display", "defect", "repair", "replacement", "coverage", "year", "protection", "period"},
+    "Warranty Exclusions": {"warranty", "damage", "liquid", "water", "repair", "exclusion", "inspection", "accidental", "dropped", "modified", "scratch"},
+    "Warranty Claim Process": {"warranty", "claim", "serial", "inspection", "repair", "replacement", "photos", "service", "apart", "open", "modify", "review"},
+    "Shipping & Delivery": {"shipping", "delivery", "tracking", "delivered", "parcel", "carrier", "package", "arrival", "arrive", "late", "missing", "lost", "movement", "scan"},
+    "Delivery Delays & Missing Parcels": {"shipping", "delivery", "tracking", "delivered", "parcel", "carrier", "package", "late", "missing", "lost", "update", "business", "dispatch", "delay", "additional", "report"},
+    "Payment & Receipts": {"payment", "pay", "charge", "receipt", "invoice", "card", "paypal", "charged", "billing", "email", "confirmation", "inbox"},
+    "Order Changes & Cancellations": {"order", "cancel", "change", "address", "dispatch", "fulfillment", "packed", "ship", "parcel", "delivery", "sent", "update", "where"},
     "Safe Device Checks": {"device", "power", "charge", "cable", "restart", "screen", "flicker", "troubleshoot", "outlet", "battery", "charger"},
 }
-WORD_ALIASES = {
-    "returns": "return", "returned": "return", "refunds": "refund", "refunded": "refund",
-    "opened": "open", "defective": "defect", "defects": "defect", "flickering": "flicker",
-    "damaged": "damage", "accessories": "accessory", "days": "day", "back": "return",
-    "send": "return", "mail": "return", "packages": "package", "parcels": "parcel",
-    "arrived": "arrive", "arrival": "arrive", "delivered": "delivery",
-    "shipping": "ship", "shipped": "ship", "ships": "ship", "shipment": "ship", "shipments": "ship",
-    "cancellation": "cancel", "cancellations": "cancel", "cancelled": "cancel", "cancelling": "cancel",
-    "changes": "change", "addresses": "address", "receipts": "receipt", "invoices": "invoice",
-    "charges": "charge", "charged": "charge", "batteries": "battery", "chargers": "charger",
-    "troubleshooting": "troubleshoot",
-}
-
-
 def load_policy_corpus() -> list[dict]:
     policies = []
     title_pattern = "|".join(re.escape(title) for title in sorted(POLICY_TERMS, key=len, reverse=True))
@@ -95,6 +83,7 @@ def load_policy_corpus() -> list[dict]:
 
 
 POLICIES = load_policy_corpus()
+POLICY_RETRIEVER = PolicyRetriever(POLICIES)
 
 
 class ChatRequest(BaseModel):
@@ -219,26 +208,7 @@ def extract_order_id(message: str, supplied_id: str | None) -> str | None:
 
 
 def retrieve_policies(message: str) -> list[dict]:
-    words = {
-        WORD_ALIASES.get(word, word)
-        for word in re.findall(r"[a-z0-9]+", message.lower())
-    }
-    scored = []
-    for policy in POLICIES:
-        normalized_terms = {WORD_ALIASES.get(term, term) for term in policy["terms"]}
-        score = len(words & normalized_terms)
-        if score:
-            scored.append((score, policy))
-    scored.sort(key=lambda result: result[0], reverse=True)
-    return [
-        {
-            "title": policy["title"],
-            "citation": f'{policy["section"]}, p. {policy["page"]}',
-            "excerpt": policy["text"],
-            "score": score,
-        }
-        for score, policy in scored[:3]
-    ]
+    return POLICY_RETRIEVER.search(message, limit=3)
 
 
 def create_escalation(
