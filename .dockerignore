@@ -1,0 +1,14 @@
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+data
+dist
+node_modules
+__pycache__
+*.py[cod]
+*.docx
+*.tmp
+tests
+tools

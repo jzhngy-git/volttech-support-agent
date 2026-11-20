@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: volttech-support-agent
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health

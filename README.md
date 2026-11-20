@@ -20,6 +20,16 @@ npm run dev
 
 Open the Vite URL (usually `http://localhost:5173`). The SQLite database is created and seeded at `data/volttech.sqlite3`.
 
+## Deploy publicly
+
+This app needs both the React interface and the FastAPI backend, so GitHub Pages alone cannot run it. The included `render.yaml` and `Dockerfile` deploy both in one Render web service:
+
+1. In Render, choose **New → Blueprint** and connect this GitHub repository.
+2. Select `volttech-support-agent` and deploy the blueprint.
+3. Open the public `onrender.com` URL shown for the service.
+
+The free service may sleep when idle. Its filesystem is temporary, so SQLite demo changes can reset after a restart or redeploy. Do not use real customer data.
+
 ## Demo records
 
 - `VT-1042`: VoltBook Pro, delivered 20 days ago, $1,299. Eligible for an initial defect/return review, but high-value cases are escalated.

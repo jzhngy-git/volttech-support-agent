@@ -11,6 +11,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
@@ -489,3 +490,8 @@ def get_stats() -> dict:
             "open_tickets": db.execute("SELECT COUNT(*) FROM tickets WHERE status = 'open'").fetchone()[0],
         }
     return counts
+
+
+DIST_DIR = ROOT / "dist"
+if DIST_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="frontend")
