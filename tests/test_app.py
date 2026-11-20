@@ -98,6 +98,32 @@ class SupportFlowTests(unittest.TestCase):
         self.assertIn("won't guess", body["answer"])
         self.assertEqual(body["escalation"]["reason"], "uncertain")
 
+    def test_exchange_request_explains_policy_gap_and_high_value_handoff(self):
+        response = self.client.post(
+            "/api/chat",
+            json={
+                "message": "Can I exchange the laptop instead of returning it? #VT-1042",
+                "order_id": "VT-1042",
+            },
+        )
+
+        body = response.json()
+        self.assertIn("doesn't confirm whether an exchange is offered", body["answer"])
+        self.assertIn("support needs to confirm", body["answer"])
+        self.assertEqual(body["escalation"]["reason"], "high_value")
+        self.assertFalse(body["eligible"])
+
+    def test_contact_and_exchange_location_questions_are_not_guessed(self):
+        questions = [
+            "Where can I drop off my return?",
+            "What number should I call for support?",
+        ]
+        for question in questions:
+            with self.subTest(question=question):
+                body = self.client.post("/api/chat", json={"message": question}).json()
+                self.assertIn("doesn't include a store/drop-off address or a phone number", body["answer"])
+                self.assertEqual(body["escalation"]["reason"], "uncertain")
+
     def test_frustration_and_possible_exclusion_are_escalated(self):
         frustrated = self.client.post(
             "/api/chat",

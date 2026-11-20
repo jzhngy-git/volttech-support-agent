@@ -207,6 +207,26 @@ def extract_order_id(message: str, supplied_id: str | None) -> str | None:
     return candidate.upper().lstrip("#") if candidate else None
 
 
+def has_exchange_intent(message: str) -> bool:
+    return bool(
+        re.search(r"\b(exchange|swap)\b", message, re.IGNORECASE)
+        or re.search(r"\binstead of (?:a )?(?:return|refund|sending it back)\b", message, re.IGNORECASE)
+    )
+
+
+def has_contact_intent(message: str) -> bool:
+    text = message.lower()
+    patterns = (
+        r"\b(?:phone|telephone|contact)\s+(?:number|line)\b",
+        r"\b(?:number|phone)\b.{0,35}\b(?:call|contact|speak)\b",
+        r"\b(?:where|address|location)\b.{0,45}\b(?:exchange|return|drop[- ]?off|store|branch)\b",
+        r"\b(?:exchange|return)\b.{0,45}\b(?:where|address|location|store|drop[- ]?off)\b",
+        r"\bopening hours?\b|\bbusiness hours?\b",
+        r"\b(?:call|contact|speak|talk)\b.{0,35}\b(?:support|someone|agent|returns?)\b",
+    )
+    return any(re.search(pattern, text) for pattern in patterns)
+
+
 def retrieve_policies(message: str) -> list[dict]:
     return POLICY_RETRIEVER.search(message, limit=3)
 
@@ -271,6 +291,8 @@ def chat(request: ChatRequest) -> dict:
     order_id = extract_order_id(message, request.order_id)
     sources = retrieve_policies(message)
     order = order_record(order_id) if order_id else None
+    exchange_intent = has_exchange_intent(message)
+    contact_intent = has_contact_intent(message)
     frustrated = any(
         phrase in message.lower()
         for phrase in ("furious", "angry", "unacceptable", "awful", "lawyer", "complaint", "fed up", "ridiculous")
@@ -291,10 +313,20 @@ def chat(request: ChatRequest) -> dict:
     answer_parts = []
     if sources:
         answer_parts.append(f'According to **{sources[0]["citation"]}**, {sources[0]["excerpt"]}')
-    else:
+    elif not exchange_intent and not contact_intent:
         answer_parts.append(
             "I couldn't find a policy clause that answers that confidently, so I won't guess. "
             "I can route this to a support specialist."
+        )
+    if exchange_intent:
+        answer_parts.append(
+            "The published policy explains returns and refunds, but doesn't confirm whether an exchange is offered. "
+            "I can't promise an exchange; support needs to confirm the available options."
+        )
+    if contact_intent:
+        answer_parts.append(
+            "The verified information provided to me doesn't include a store/drop-off address or a phone number. "
+            "I won't guess those details, so I've sent this question to support."
         )
 
     if order_id and order is None:
@@ -336,6 +368,12 @@ def chat(request: ChatRequest) -> dict:
             order_id,
             f"Requested resolution is outside the 30-day return window. Human review required: {message}",
             escalation_reason,
+        )
+    elif contact_intent or exchange_intent:
+        escalation = create_escalation(
+            order_id,
+            f"Support must confirm exchange eligibility or verified contact/location details. Customer request: {message}",
+            "uncertain",
         )
 
     return_policy_retrieved = any(source["title"] == "30-Day Returns" for source in sources)
