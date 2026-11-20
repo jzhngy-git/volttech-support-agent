@@ -35,6 +35,7 @@ class SupportFlowTests(unittest.TestCase):
         self.assertEqual(body["order"]["id"], "VT-1043")
         self.assertTrue(body["eligible"])
         self.assertTrue(any("Returns & Exchanges Section 2.1, p. 2" == s["citation"] for s in body["sources"]))
+        self.assertNotIn("According to", body["answer"])
 
     def test_chat_covers_more_faq_topics_and_paraphrases(self):
         examples = [

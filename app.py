@@ -312,7 +312,7 @@ def chat(request: ChatRequest) -> dict:
 
     answer_parts = []
     if sources:
-        answer_parts.append(f'According to **{sources[0]["citation"]}**, {sources[0]["excerpt"]}')
+        answer_parts.append(sources[0]["excerpt"])
     elif not exchange_intent and not contact_intent:
         answer_parts.append(
             "I couldn't find a policy clause that answers that confidently, so I won't guess. "
