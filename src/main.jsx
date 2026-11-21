@@ -237,12 +237,13 @@ function App() {
                     <div className="welcome-icon"><MessageCircle size={21} /></div>
                     <div className="welcome-kicker">VOLTTECH CUSTOMER SUPPORT</div>
                     <h2>How can we help?</h2>
-                    <p>Ask about an order, return, or warranty. We’ll check the policy and pass anything unclear to a person.</p>
+                    <p>Ask about an order, return, or warranty. You can also ask for a specialist anytime; requests are added to the handoff queue.</p>
                     <div className="suggestion-grid">
                       <button onClick={() => sendMessage("Can I return my laptop? The screen flickers after 20 days. #VT-1042")}><span className="suggestion-symbol lavender"><BookOpen size={16} /></span><span><b>Return a defective laptop</b><small>Check the policy and order</small></span><ChevronRight size={15} /></button>
                       <button onClick={() => { lookupOrder("VT-1043"); sendMessage("My VoltBuds are defective and won't turn on. #VT-1043"); }}><span className="suggestion-symbol green"><PackageCheck size={16} /></span><span><b>Replace defective earbuds</b><small>Try the approval process · VT-1043</small></span><ChevronRight size={15} /></button>
                       <button onClick={() => sendMessage("Can I cancel my order before it ships?")}><span className="suggestion-symbol lavender"><RotateCcw size={16} /></span><span><b>Change or cancel an order</b><small>Check before-dispatch rules</small></span><ChevronRight size={15} /></button>
                       <button onClick={() => sendMessage("How do I get another copy of my payment receipt?")}><span className="suggestion-symbol green"><FileText size={16} /></span><span><b>Find a receipt</b><small>Ask about payment and billing</small></span><ChevronRight size={15} /></button>
+                      <button onClick={() => sendMessage("I'd like to speak to a support specialist.")}><span className="suggestion-symbol lavender"><Headphones size={16} /></span><span><b>Talk to a specialist</b><small>Request a human handoff</small></span><ChevronRight size={15} /></button>
                     </div>
                     <div className="demo-hint"><Shield size={14} /> Uses sample customer and order data</div>
                   </div>
@@ -312,7 +313,7 @@ function Message({ message, onLookup }) {
       <div className="message-meta"><b>VoltTech Support</b><time>{formatTime(message.time)}</time></div>
       <div className="assistant-bubble">{message.answer.split("\n\n").map((paragraph, index) => <p key={index}>{renderAnswer(paragraph)}</p>)}</div>
       {message.order && <button className="inline-order" onClick={() => onLookup(message.order.id)}><ShoppingBag size={13} /> Order #{message.order.id}<ArrowDown size={12} /></button>}
-      {message.escalation && <div className="escalation-notice"><span><LifeBuoy size={15} /></span><div><b>Handed off to a human</b><small>Ticket {message.escalation.ticket_id} · {message.escalation.reason.replaceAll("_", " ")} · {message.escalation.priority} priority</small></div><ArrowUpRight size={14} /></div>}
+      {message.escalation && <div className="escalation-notice"><span><LifeBuoy size={15} /></span><div><b>Added to the handoff queue</b><small>Ticket {message.escalation.ticket_id} · {message.escalation.reason.replaceAll("_", " ")} · {message.escalation.priority} priority</small></div><ArrowUpRight size={14} /></div>}
     </div>
   </div>;
 }

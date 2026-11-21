@@ -115,7 +115,7 @@ class ApprovalRequest(BaseModel):
 class EscalationPayload(BaseModel):
     order_id: str | None
     summary: str
-    reason: Literal["out_of_policy", "high_value", "customer_frustration", "uncertain"]
+    reason: Literal["out_of_policy", "high_value", "customer_frustration", "human_requested", "uncertain"]
     priority: Literal["normal", "high"]
 
 
@@ -223,6 +223,16 @@ def has_contact_intent(message: str) -> bool:
         r"\b(?:exchange|return)\b.{0,45}\b(?:where|address|location|store|drop[- ]?off)\b",
         r"\bopening hours?\b|\bbusiness hours?\b",
         r"\b(?:call|contact|speak|talk)\b.{0,35}\b(?:support|someone|agent|returns?)\b",
+    )
+    return any(re.search(pattern, text) for pattern in patterns)
+
+
+def has_specialist_intent(message: str) -> bool:
+    text = message.lower()
+    patterns = (
+        r"\b(?:specialist|human|real person|live agent|representative)\b",
+        r"\b(?:speak|talk|connect|transfer|put me through|escalate)\b.{0,40}\b(?:person|agent|someone)\b",
+        r"\b(?:someone|a person)\b.{0,30}\b(?:help|assist|talk|speak)\b",
     )
     return any(re.search(pattern, text) for pattern in patterns)
 
@@ -371,6 +381,7 @@ def chat(request: ChatRequest) -> dict:
     order_id = extract_order_id(message, request.order_id)
     sources = retrieve_policies(message)
     order = order_record(order_id) if order_id else None
+    specialist_intent = has_specialist_intent(message)
     exchange_intent = has_exchange_intent(message)
     contact_intent = has_contact_intent(message)
     frustrated = any(
@@ -393,7 +404,13 @@ def chat(request: ChatRequest) -> dict:
 
     answer_parts = []
     order_context_in_answer = False
-    if exchange_intent:
+    if specialist_intent:
+        answer_parts.append(
+            "I've added a request for a support specialist to review. This demo records the request "
+            "in its handoff queue; it doesn't connect to a live support agent. No order changes have "
+            "been made."
+        )
+    elif exchange_intent:
         if order and return_policy_retrieved:
             window = "within" if order["return_eligible"] else "outside"
             answer_parts.append(
@@ -447,6 +464,12 @@ def chat(request: ChatRequest) -> dict:
             f"Possible warranty exclusion requires inspection. Customer request: {message}",
             "uncertain",
         )
+    elif specialist_intent:
+        escalation = create_escalation(
+            order_id,
+            f"Customer requested a support specialist: {message}",
+            "human_requested",
+        )
     elif order and not order["return_eligible"] and not order["warranty_active"]:
         escalation = create_escalation(
             order_id,
@@ -476,6 +499,7 @@ def chat(request: ChatRequest) -> dict:
         and defect_signal
         and not exclusion_signal
         and not frustrated
+        and not specialist_intent
         and order["price"] <= 200
     )
     if order and escalation and escalation["reason"] == "high_value":

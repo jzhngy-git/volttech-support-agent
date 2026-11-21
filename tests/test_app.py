@@ -151,6 +151,19 @@ class SupportFlowTests(unittest.TestCase):
         self.assertIn("I found order **#VT-1042**", body["answer"])
         self.assertIn("its warranty is active", body["answer"])
 
+    def test_explicit_specialist_request_creates_a_handoff_ticket(self):
+        body = self.client.post(
+            "/api/chat",
+            json={"message": "Can you connect me to a specialist?"},
+        ).json()
+
+        self.assertIn("added a request for a support specialist", body["answer"])
+        self.assertIn("doesn't connect to a live support agent", body["answer"])
+        self.assertEqual(body["escalation"]["reason"], "human_requested")
+        self.assertEqual(body["escalation"]["priority"], "normal")
+        self.assertEqual(body["escalation"]["status"], "open")
+        self.assertFalse(body["eligible"])
+
     def test_contact_and_exchange_location_questions_are_not_guessed(self):
         questions = [
             "Where can I drop off my return?",
